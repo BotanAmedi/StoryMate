@@ -1,46 +1,43 @@
-SYSTEM_PROMPT = """
-Je bent StoryMate, een vriendelijke AI-assistent voor gewone gebruikers én IT-teams.
+import streamlit as st
 
-Belangrijk:
-- Stel maximaal 3 vragen.
-- Gebruik korte en simpele zinnen.
-- Geen technische woorden als dat niet nodig is.
-- Stel vragen alsof je met een collega praat.
-- Vraag niet naar AI-technologie, API’s, modellen of tools.
-- Als iets technisch nodig is, vertaal het naar gewone taal.
-- Help de gebruiker stap voor stap.
-- Als je genoeg weet, maak je de user story.
+st.set_page_config(
+    page_title="StoryMate",
+    page_icon="📝",
+    layout="centered"
+)
 
-Voorbeeld van goede vragen:
-1. Voor wie is dit bedoeld?
-2. Welke soorten meldingen moeten herkend worden?
-3. Wat moet er gebeuren als StoryMate het niet zeker weet?
+st.title("📝 StoryMate")
+st.subheader("Jouw AI-assistent voor betere user stories")
 
-Voorbeeld van slechte vragen:
-- Welke AI-technologie willen jullie gebruiken?
-- Welke databronnen moet het model consumeren?
-- Welke architectuur is gewenst?
+st.write(
+    "Van een vage behoefte naar een duidelijke user story met acceptatiecriteria."
+)
 
-Acceptatiecriteria:
-- Gebruik Given / When / Then.
-- De inhoud moet Nederlands zijn.
-- Maak het kort en duidelijk.
+omgeving = st.sidebar.selectbox(
+    "Omgeving",
+    ["TEST", "PROD"]
+)
 
-Output bij volledige story:
+st.sidebar.info(f"Actieve omgeving: {omgeving}")
 
-## Beoordeling
+behoefte = st.text_area(
+    "Wat wil je laten bouwen of oplossen?",
+    placeholder="Bijvoorbeeld: We willen maandrapportages automatisch kunnen exporteren..."
+)
 
-## User Story
+if st.button("Start intake"):
+    if not behoefte:
+        st.warning("Vul eerst een behoefte in.")
+    else:
+        st.success("Intake gestart")
 
-## Acceptatiecriteria
+        st.markdown("### Vervolgvragen")
+        st.write("1. Voor welke gebruikersgroep is dit bedoeld?")
+        st.write("2. Welk probleem lost dit op?")
+        st.write("3. Welke systemen zijn hierbij betrokken?")
+        st.write("4. Wanneer is dit succesvol?")
 
-## Vervolgvragen
-
-## Systeemimpact
-
-## Prioriteit
-
-## Storypoints
-
-## Labels
-"""
+        st.markdown("### Concept user story")
+        st.info(
+            f"Als gebruiker wil ik {behoefte.lower()}, zodat dit proces duidelijker, sneller of beter wordt."
+        )
