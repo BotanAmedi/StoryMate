@@ -1,0 +1,2 @@
+# StoryMate
+Story Generator
