@@ -1,43 +1,59 @@
 import streamlit as st
+from openai import OpenAI
 
-st.set_page_config(
-    page_title="StoryMate",
-    page_icon="📝",
-    layout="centered"
-)
+st.set_page_config(page_title="StoryMate", page_icon="📝", layout="centered")
+
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 st.title("📝 StoryMate")
 st.subheader("Jouw AI-assistent voor betere user stories")
-
-st.write(
-    "Van een vage behoefte naar een duidelijke user story met acceptatiecriteria."
-)
-
-omgeving = st.sidebar.selectbox(
-    "Omgeving",
-    ["TEST", "PROD"]
-)
-
-st.sidebar.info(f"Actieve omgeving: {omgeving}")
 
 behoefte = st.text_area(
     "Wat wil je laten bouwen of oplossen?",
     placeholder="Bijvoorbeeld: We willen maandrapportages automatisch kunnen exporteren..."
 )
 
-if st.button("Start intake"):
-    if not behoefte:
+if st.button("Genereer user story"):
+    if not behoefte.strip():
         st.warning("Vul eerst een behoefte in.")
     else:
-        st.success("Intake gestart")
+        with st.spinner("StoryMate denkt mee..."):
+            prompt = f"""
+Je bent StoryMate, een AI-assistent voor IT-teams.
 
-        st.markdown("### Vervolgvragen")
-        st.write("1. Voor welke gebruikersgroep is dit bedoeld?")
-        st.write("2. Welk probleem lost dit op?")
-        st.write("3. Welke systemen zijn hierbij betrokken?")
-        st.write("4. Wanneer is dit succesvol?")
+Maak van onderstaande behoefte een Jira-ready user story in het Nederlands.
 
-        st.markdown("### Concept user story")
-        st.info(
-            f"Als gebruiker wil ik {behoefte.lower()}, zodat dit proces duidelijker, sneller of beter wordt."
-        )
+Behoefte:
+{behoefte}
+
+Geef output in dit format:
+
+## User Story
+Als [rol] wil ik [functionaliteit], zodat [waarde].
+
+## Acceptatiecriteria
+1.
+2.
+3.
+4.
+5.
+
+## Systeemimpact
+Beschrijf welke systemen mogelijk geraakt worden.
+
+## Prioriteit
+Low / Medium / High met korte uitleg.
+
+## Storypoints
+Schatting met korte uitleg.
+
+## Labels
+Geef 3 tot 6 labels.
+"""
+
+            response = client.responses.create(
+                model="gpt-4.1-mini",
+                input=prompt
+            )
+
+            st.markdown(response.output_text)
