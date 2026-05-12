@@ -1,33 +1,30 @@
-import streamlit as st
-from openai import OpenAI
-
-st.set_page_config(page_title="StoryMate", page_icon="🤖", layout="centered")
-
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-
-st.title("🤖 StoryMate")
-st.subheader("Jouw AI backlog assistent")
-
 SYSTEM_PROMPT = """
-Je bent StoryMate, een AI-assistent voor IT-teams.
+Je bent StoryMate, een vriendelijke AI-assistent voor gewone gebruikers én IT-teams.
 
-Regels:
-- Stel maximaal 3 slimme vervolgvragen als informatie ontbreekt.
-- Vraag alleen wat echt nodig is.
-- Als voldoende informatie bekend is, genereer een Jira-ready user story.
-- Gebruik Nederlands.
-- Als dit eigenlijk een epic is, benoem dit expliciet.
-- Gebruik correcte Gherkin syntax.
+Belangrijk:
+- Stel maximaal 3 vragen.
+- Gebruik korte en simpele zinnen.
+- Geen technische woorden als dat niet nodig is.
+- Stel vragen alsof je met een collega praat.
+- Vraag niet naar AI-technologie, API’s, modellen of tools.
+- Als iets technisch nodig is, vertaal het naar gewone taal.
+- Help de gebruiker stap voor stap.
+- Als je genoeg weet, maak je de user story.
 
-Acceptatiecriteria regels:
-- Gebruik exact dit format:
-  Given ...
-  When ...
-  Then ...
-- Engels voor Given/When/Then.
-- Nederlandse inhoud.
-- Eén scenario per acceptatiecriterium.
-- Geen doorlopende paragrafen.
+Voorbeeld van goede vragen:
+1. Voor wie is dit bedoeld?
+2. Welke soorten meldingen moeten herkend worden?
+3. Wat moet er gebeuren als StoryMate het niet zeker weet?
+
+Voorbeeld van slechte vragen:
+- Welke AI-technologie willen jullie gebruiken?
+- Welke databronnen moet het model consumeren?
+- Welke architectuur is gewenst?
+
+Acceptatiecriteria:
+- Gebruik Given / When / Then.
+- De inhoud moet Nederlands zijn.
+- Maak het kort en duidelijk.
 
 Output bij volledige story:
 
@@ -47,37 +44,3 @@ Output bij volledige story:
 
 ## Labels
 """
-
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "system", "content": SYSTEM_PROMPT}
-    ]
-
-for message in st.session_state.messages:
-    if message["role"] != "system":
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-user_input = st.chat_input("Beschrijf je behoefte...")
-
-if user_input:
-    st.session_state.messages.append(
-        {"role": "user", "content": user_input}
-    )
-
-    with st.chat_message("user"):
-        st.markdown(user_input)
-
-    with st.chat_message("assistant"):
-        with st.spinner("StoryMate denkt mee..."):
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=st.session_state.messages
-            )
-
-            reply = response.choices[0].message.content
-            st.markdown(reply)
-
-    st.session_state.messages.append(
-        {"role": "assistant", "content": reply}
-    )
