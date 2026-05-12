@@ -21,11 +21,6 @@ Belangrijk:
 - Help stap voor stap.
 - Zodra je genoeg weet, maak je een volledige user story.
 
-Goede vragen zijn bijvoorbeeld:
-1. Voor wie is dit bedoeld?
-2. Welke meldingen moeten herkend worden?
-3. Wat moet er gebeuren als StoryMate twijfelt?
-
 Als je een volledige story maakt, gebruik dit format:
 
 ## Beoordeling
@@ -33,8 +28,6 @@ Als je een volledige story maakt, gebruik dit format:
 ## User Story
 
 ## Acceptatiecriteria
-
-Gebruik:
 Given ...
 When ...
 Then ...
@@ -51,30 +44,45 @@ Then ...
 st.title("📝 StoryMate")
 st.subheader("Jouw AI-assistent voor betere user stories")
 
-omgeving = st.sidebar.selectbox(
-    "Omgeving",
-    ["TEST", "PROD"]
-)
-
+omgeving = st.sidebar.selectbox("Omgeving", ["TEST", "PROD"])
 st.sidebar.info(f"Actieve omgeving: {omgeving}")
 
-behoefte = st.text_area(
-    "Wat wil je laten bouwen of oplossen?",
-    placeholder="Bijvoorbeeld: We willen TOPdesk meldingen automatisch categoriseren met AI..."
-)
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {"role": "system", "content": SYSTEM_PROMPT}
+    ]
 
-if st.button("Start intake"):
-    if not behoefte.strip():
-        st.warning("Vul eerst een behoefte in.")
-    else:
+for message in st.session_state.messages:
+    if message["role"] != "system":
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+user_input = st.chat_input("Typ je behoefte of antwoord hier...")
+
+if user_input:
+    st.session_state.messages.append(
+        {"role": "user", "content": user_input}
+    )
+
+    with st.chat_message("user"):
+        st.markdown(user_input)
+
+    with st.chat_message("assistant"):
         with st.spinner("StoryMate denkt mee..."):
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": behoefte}
-                ]
+                messages=st.session_state.messages
             )
 
             antwoord = response.choices[0].message.content
             st.markdown(antwoord)
+
+    st.session_state.messages.append(
+        {"role": "assistant", "content": antwoord}
+    )
+
+if st.sidebar.button("Nieuw gesprek"):
+    st.session_state.messages = [
+        {"role": "system", "content": SYSTEM_PROMPT}
+    ]
+    st.rerun()
