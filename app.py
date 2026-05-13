@@ -89,7 +89,7 @@ Geef 3 tot 6 labels.
 st.title("📝 StoryMate")
 st.subheader("Jouw AI-assistent voor betere user stories")
 
-omgeving = st.sidebar.selectbox("Omgeving", ["TEST", "PROD"])
+omgeving = st.sidebar.selectbox("Omgeving", ["TEST"])
 st.sidebar.info(f"Actieve omgeving: {omgeving}")
 
 if "messages" not in st.session_state:
