@@ -12,7 +12,7 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 st.title("📝 StoryMate")
 st.subheader("Jouw AI-assistent voor betere user stories")
 
-omgeving = st.sidebar.selectbox("Omgeving", ["TEST", "PROD"])
+omgeving = st.sidebar.selectbox("Omgeving", ["PROD"])
 st.sidebar.info(f"Actieve omgeving: {omgeving}")
 
 if st.sidebar.button("Nieuw gesprek"):
