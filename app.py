@@ -17,7 +17,6 @@ st.markdown("""
     background:
         radial-gradient(circle at top left, rgba(37, 99, 235, 0.30), transparent 35%),
         linear-gradient(135deg, #0f172a 0%, #1e1b4b 45%, #312e81 100%);
-    color: #0f172a;
 }
 
 .block-container {
@@ -98,10 +97,29 @@ st.markdown("""
     transform: translateY(-1px);
 }
 
+label {
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+[data-testid="stTextInput"] label {
+    color: white !important;
+}
+
 [data-testid="stTextInput"] input {
     border-radius: 14px;
-    border: 1px solid #dbeafe;
-    background: #f8fafc;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.95);
+    color: #111827 !important;
+}
+
+[data-testid="stTextInputRootElement"] {
+    background: rgba(255,255,255,0.95);
+    border-radius: 14px;
+}
+
+[data-testid="stTextInput"] input::placeholder {
+    color: #64748b;
 }
 
 [data-testid="stChatMessage"] {
@@ -114,10 +132,6 @@ st.markdown("""
 
 h1, h2, h3 {
     color: #111827;
-}
-
-hr {
-    border-color: rgba(255,255,255,0.25);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -133,53 +147,13 @@ Belangrijke regels:
 - Stel maximaal 3 vragen in totaal.
 - Wacht na elke vraag op het antwoord van de gebruiker.
 - Gebruik korte en simpele zinnen.
-- Gebruik natuurlijk Nederlands, alsof je met een collega praat.
+- Gebruik natuurlijk Nederlands.
 - Gebruik geen moeilijke technische woorden.
-- Vraag niet naar AI-technologie, API's, modellen of architectuur.
 - Als je genoeg weet, maak je direct de user story.
-
-Als je een volledige story maakt, gebruik exact dit format:
-
-## Beoordeling
-Geef aan of dit een user story of een epic is.
-
-## User Story
-Als [rol] wil ik [functionaliteit], zodat [waarde].
-
-## Acceptatiecriteria
-Gebruik alleen Nederlands.
-
-Format:
-1.
-Situatie: ...
-Actie: ...
-Verwachting: ...
-
-2.
-Situatie: ...
-Actie: ...
-Verwachting: ...
-
-3.
-Situatie: ...
-Actie: ...
-Verwachting: ...
-
-## Systeemimpact
-Beschrijf kort welke systemen geraakt kunnen worden.
-
-## Prioriteit
-Laag, middel of hoog met korte uitleg.
-
-## Storypoints
-Geef een schatting met korte uitleg.
-
-## Labels
-Geef 3 tot 6 labels.
 """
 
-def render_logo(subtitle="Jouw AI-assistent voor betere user stories", text="Van een vage wens naar een duidelijke user story die je direct naar Jira kunt sturen."):
-    st.markdown(f"""
+def render_logo():
+    st.markdown("""
     <div class="hero-card">
         <div class="logo-row">
             <div class="logo-badge">📝</div>
@@ -187,8 +161,8 @@ def render_logo(subtitle="Jouw AI-assistent voor betere user stories", text="Van
                 <p class="app-title">StoryMate</p>
             </div>
         </div>
-        <p class="app-subtitle">{subtitle}</p>
-        <p class="small-muted">{text}</p>
+        <p class="app-subtitle">Jouw AI-assistent voor betere user stories</p>
+        <p class="small-muted">Van idee naar backlog item in minuten.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -202,7 +176,7 @@ def login_scherm():
             </div>
         </div>
         <p class="app-subtitle">Welkom terug</p>
-        <p class="small-muted">Log in om user stories te maken en direct naar Jira te sturen.</p>
+        <p class="small-muted">Log in om verder te gaan.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -222,27 +196,16 @@ def login_scherm():
 def push_to_jira(story_text):
     jira_url = f"{st.secrets['JIRA_BASE_URL']}/rest/api/2/issue"
 
-    summary = "Nieuwe user story vanuit StoryMate"
-
-    for line in story_text.splitlines():
-        if line.lower().startswith("als "):
-            summary = line[:250]
-            break
-
     payload = {
         "fields": {
-            "project": {
-                "key": st.secrets["JIRA_PROJECT_KEY"]
-            },
-            "summary": summary,
+            "project": {"key": st.secrets["JIRA_PROJECT_KEY"]},
+            "summary": "Nieuwe user story vanuit StoryMate",
             "description": story_text,
-            "issuetype": {
-                "name": st.secrets["JIRA_ISSUE_TYPE"]
-            }
+            "issuetype": {"name": st.secrets["JIRA_ISSUE_TYPE"]}
         }
     }
 
-    response = requests.post(
+    return requests.post(
         jira_url,
         json=payload,
         auth=HTTPBasicAuth(
@@ -254,8 +217,6 @@ def push_to_jira(story_text):
             "Content-Type": "application/json"
         }
     )
-
-    return response
 
 if "ingelogd" not in st.session_state:
     st.session_state.ingelogd = False
@@ -269,13 +230,8 @@ render_logo()
 st.sidebar.markdown("## StoryMate")
 st.sidebar.success(f"Ingelogd als: {st.session_state.gebruiker}")
 
-omgeving = st.sidebar.selectbox("Omgeving", ["TEST"])
-st.sidebar.info(f"Actieve omgeving: {omgeving}")
-
 if st.sidebar.button("Nieuw gesprek"):
-    st.session_state.messages = [
-        {"role": "system", "content": SYSTEM_PROMPT}
-    ]
+    st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     st.session_state.last_story = ""
     st.rerun()
 
@@ -284,9 +240,7 @@ if st.sidebar.button("Uitloggen"):
     st.rerun()
 
 if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "system", "content": SYSTEM_PROMPT}
-    ]
+    st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
 if "last_story" not in st.session_state:
     st.session_state.last_story = ""
@@ -299,9 +253,7 @@ for message in st.session_state.messages:
 user_input = st.chat_input("Typ je wens of antwoord hier...")
 
 if user_input:
-    st.session_state.messages.append(
-        {"role": "user", "content": user_input}
-    )
+    st.session_state.messages.append({"role": "user", "content": user_input})
 
     with st.chat_message("user"):
         st.markdown(user_input)
@@ -316,30 +268,24 @@ if user_input:
             antwoord = response.choices[0].message.content
             st.markdown(antwoord)
 
-    st.session_state.messages.append(
-        {"role": "assistant", "content": antwoord}
-    )
+    st.session_state.messages.append({"role": "assistant", "content": antwoord})
 
-    if "## User Story" in antwoord:
+    if "User Story" in antwoord:
         st.session_state.last_story = antwoord
 
 if st.session_state.last_story:
     st.markdown("""
     <div class="jira-card">
         <h3>Jira export</h3>
-        <p class="small-muted">Zet deze user story direct door naar je Jira backlog.</p>
+        <p class="small-muted">Stuur deze story direct naar Jira.</p>
     </div>
     """, unsafe_allow_html=True)
 
     if st.button("Push naar Jira"):
-        with st.spinner("User story wordt naar Jira gestuurd..."):
-            jira_response = push_to_jira(st.session_state.last_story)
+        jira_response = push_to_jira(st.session_state.last_story)
 
         if jira_response.status_code == 201:
-            issue_key = jira_response.json()["key"]
-            jira_link = f"{st.secrets['JIRA_BASE_URL']}/browse/{issue_key}"
-            st.success(f"User story is aangemaakt in Jira: {issue_key}")
-            st.link_button("Open in Jira", jira_link)
+            st.success("User story aangemaakt in Jira")
         else:
-            st.error("Aanmaken in Jira is mislukt.")
+            st.error("Aanmaken mislukt")
             st.code(jira_response.text)
