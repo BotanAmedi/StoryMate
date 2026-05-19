@@ -77,10 +77,18 @@ def push_to_jira(story_text):
             summary = line[:250]
             break
 
-    payload = {
-        "fields": {
-            "project": {
-                "key": st.secrets["JIRA_PROJECT_KEY"]
+   payload = {
+    "fields": {
+        "project": {
+            "key": st.secrets["JIRA_PROJECT_KEY"]
+        },
+        "summary": summary,
+        "description": story_text,
+        "issuetype": {
+            "name": st.secrets["JIRA_ISSUE_TYPE"]
+        }
+    }
+}
             },
             "summary": summary,
             "description": {
