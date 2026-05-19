@@ -14,64 +14,110 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 st.markdown("""
 <style>
 .stApp {
-    background: linear-gradient(135deg, #f7f9fc 0%, #eaf1ff 100%);
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.30), transparent 35%),
+        linear-gradient(135deg, #0f172a 0%, #1e1b4b 45%, #312e81 100%);
+    color: #0f172a;
 }
 
 .block-container {
-    max-width: 900px;
+    max-width: 950px;
     padding-top: 3rem;
 }
 
-h1 {
-    color: #1f2937;
-    font-weight: 800;
-}
-
-h2, h3 {
-    color: #24324b;
-}
-
-.stButton > button {
-    background-color: #2563eb;
-    color: white;
-    border-radius: 12px;
-    border: none;
-    padding: 0.6rem 1.2rem;
-    font-weight: 600;
-}
-
-.stButton > button:hover {
-    background-color: #1d4ed8;
-    color: white;
-}
-
-[data-testid="stTextInput"] input {
-    border-radius: 12px;
+[data-testid="stHeader"] {
+    background: transparent;
 }
 
 [data-testid="stSidebar"] {
-    background-color: #ffffff;
+    background: #0f172a;
 }
 
-.login-card {
-    background: white;
+[data-testid="stSidebar"] * {
+    color: white;
+}
+
+.hero-card, .login-card, .jira-card {
+    background: rgba(255, 255, 255, 0.94);
     padding: 2rem;
-    border-radius: 22px;
-    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
-    margin-top: 2rem;
+    border-radius: 28px;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25);
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(255,255,255,0.5);
 }
 
-.hero {
-    background: white;
-    padding: 1.8rem;
-    border-radius: 22px;
-    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
-    margin-bottom: 1.5rem;
+.logo-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo-badge {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
+}
+
+.app-title {
+    font-size: 2.6rem;
+    font-weight: 900;
+    color: #111827;
+    margin: 0;
+}
+
+.app-subtitle {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-top: 1.2rem;
 }
 
 .small-muted {
     color: #64748b;
-    font-size: 0.95rem;
+    font-size: 1rem;
+}
+
+.stButton > button {
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: white;
+    border-radius: 14px;
+    border: none;
+    padding: 0.7rem 1.3rem;
+    font-weight: 700;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
+}
+
+.stButton > button:hover {
+    color: white;
+    transform: translateY(-1px);
+}
+
+[data-testid="stTextInput"] input {
+    border-radius: 14px;
+    border: 1px solid #dbeafe;
+    background: #f8fafc;
+}
+
+[data-testid="stChatMessage"] {
+    background: rgba(255,255,255,0.92);
+    border-radius: 18px;
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+h1, h2, h3 {
+    color: #111827;
+}
+
+hr {
+    border-color: rgba(255,255,255,0.25);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -132,12 +178,31 @@ Geef een schatting met korte uitleg.
 Geef 3 tot 6 labels.
 """
 
+def render_logo(subtitle="Jouw AI-assistent voor betere user stories", text="Van een vage wens naar een duidelijke user story die je direct naar Jira kunt sturen."):
+    st.markdown(f"""
+    <div class="hero-card">
+        <div class="logo-row">
+            <div class="logo-badge">📝</div>
+            <div>
+                <p class="app-title">StoryMate</p>
+            </div>
+        </div>
+        <p class="app-subtitle">{subtitle}</p>
+        <p class="small-muted">{text}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
 def login_scherm():
     st.markdown("""
     <div class="login-card">
-        <h1>📝 StoryMate</h1>
-        <h3>Jouw AI-assistent voor betere user stories</h3>
-        <p class="small-muted">Log in om verder te gaan.</p>
+        <div class="logo-row">
+            <div class="logo-badge">📝</div>
+            <div>
+                <p class="app-title">StoryMate</p>
+            </div>
+        </div>
+        <p class="app-subtitle">Welkom terug</p>
+        <p class="small-muted">Log in om user stories te maken en direct naar Jira te sturen.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -199,28 +264,23 @@ if not st.session_state.ingelogd:
     login_scherm()
     st.stop()
 
-st.markdown("""
-<div class="hero">
-    <h1>📝 StoryMate</h1>
-    <h3>Jouw AI-assistent voor betere user stories</h3>
-    <p class="small-muted">Van een vage wens naar een duidelijke user story die je direct naar Jira kunt sturen.</p>
-</div>
-""", unsafe_allow_html=True)
+render_logo()
 
+st.sidebar.markdown("## StoryMate")
 st.sidebar.success(f"Ingelogd als: {st.session_state.gebruiker}")
 
 omgeving = st.sidebar.selectbox("Omgeving", ["TEST"])
 st.sidebar.info(f"Actieve omgeving: {omgeving}")
-
-if st.sidebar.button("Uitloggen"):
-    st.session_state.clear()
-    st.rerun()
 
 if st.sidebar.button("Nieuw gesprek"):
     st.session_state.messages = [
         {"role": "system", "content": SYSTEM_PROMPT}
     ]
     st.session_state.last_story = ""
+    st.rerun()
+
+if st.sidebar.button("Uitloggen"):
+    st.session_state.clear()
     st.rerun()
 
 if "messages" not in st.session_state:
@@ -264,8 +324,12 @@ if user_input:
         st.session_state.last_story = antwoord
 
 if st.session_state.last_story:
-    st.divider()
-    st.subheader("Jira export")
+    st.markdown("""
+    <div class="jira-card">
+        <h3>Jira export</h3>
+        <p class="small-muted">Zet deze user story direct door naar je Jira backlog.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     if st.button("Push naar Jira"):
         with st.spinner("User story wordt naar Jira gestuurd..."):
