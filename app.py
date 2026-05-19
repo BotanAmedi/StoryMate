@@ -68,7 +68,7 @@ Geef 3 tot 6 labels.
 """
 
 def push_to_jira(story_text):
-    jira_url = f"{st.secrets['JIRA_BASE_URL']}/rest/api/3/issue"
+    jira_url = f"{st.secrets['JIRA_BASE_URL']}/rest/api/2/issue"
 
     summary = "Nieuwe user story vanuit StoryMate"
 
