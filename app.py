@@ -1,5 +1,7 @@
 import streamlit as st
 from openai import OpenAI
+import requests
+from requests.auth import HTTPBasicAuth
 
 st.set_page_config(
     page_title="StoryMate",
@@ -23,22 +25,7 @@ Belangrijke regels:
 - Gebruik natuurlijk Nederlands, alsof je met een collega praat.
 - Gebruik geen moeilijke technische woorden.
 - Vraag niet naar AI-technologie, API's, modellen of architectuur.
-- Vraag niet: "Wie zal hiervan profiteren?"
-- Vraag liever: "Voor wie is dit bedoeld?"
 - Als je genoeg weet, maak je direct de user story.
-
-Goede vragen:
-- Voor wie is dit bedoeld?
-- Welke meldingen moeten herkend worden?
-- Wat moet er gebeuren als StoryMate twijfelt?
-- Wanneer is dit goed genoeg?
-- Wat gebeurt er nu nog handmatig?
-
-Slechte vragen:
-- Welke AI-technologie willen jullie gebruiken?
-- Welke databronnen moet het model consumeren?
-- Welke architectuur is gewenst?
-- Wie zal hier voornamelijk van profiteren?
 
 Als je een volledige story maakt, gebruik exact dit format:
 
@@ -67,12 +54,6 @@ Situatie: ...
 Actie: ...
 Verwachting: ...
 
-Regels voor acceptatiecriteria:
-- Geen Engelse termen zoals Given, When of Then.
-- Geen onnatuurlijke Nederlandse vertaling.
-- Houd het kort en duidelijk.
-- Eén scenario per acceptatiecriterium.
-
 ## Systeemimpact
 Beschrijf kort welke systemen geraakt kunnen worden.
 
@@ -86,16 +67,79 @@ Geef een schatting met korte uitleg.
 Geef 3 tot 6 labels.
 """
 
+def push_to_jira(story_text):
+    jira_url = f"{st.secrets['JIRA_BASE_URL']}/rest/api/3/issue"
+
+    summary = "Nieuwe user story vanuit StoryMate"
+
+    for line in story_text.splitlines():
+        if line.lower().startswith("als "):
+            summary = line[:250]
+            break
+
+    payload = {
+        "fields": {
+            "project": {
+                "key": st.secrets["JIRA_PROJECT_KEY"]
+            },
+            "summary": summary,
+            "description": {
+                "type": "doc",
+                "version": 1,
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": story_text
+                            }
+                        ]
+                    }
+                ]
+            },
+            "issuetype": {
+                "name": st.secrets["JIRA_ISSUE_TYPE"]
+            }
+        }
+    }
+
+    response = requests.post(
+        jira_url,
+        json=payload,
+        auth=HTTPBasicAuth(
+            st.secrets["JIRA_EMAIL"],
+            st.secrets["JIRA_API_TOKEN"]
+        ),
+        headers={
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+    )
+
+    return response
+
+
 st.title("📝 StoryMate")
 st.subheader("Jouw AI-assistent voor betere user stories")
 
 omgeving = st.sidebar.selectbox("Omgeving", ["TEST"])
 st.sidebar.info(f"Actieve omgeving: {omgeving}")
 
+if st.sidebar.button("Nieuw gesprek"):
+    st.session_state.messages = [
+        {"role": "system", "content": SYSTEM_PROMPT}
+    ]
+    st.session_state.last_story = ""
+    st.rerun()
+
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "system", "content": SYSTEM_PROMPT}
     ]
+
+if "last_story" not in st.session_state:
+    st.session_state.last_story = ""
 
 for message in st.session_state.messages:
     if message["role"] != "system":
@@ -126,8 +170,22 @@ if user_input:
         {"role": "assistant", "content": antwoord}
     )
 
-if st.sidebar.button("Nieuw gesprek"):
-    st.session_state.messages = [
-        {"role": "system", "content": SYSTEM_PROMPT}
-    ]
-    st.rerun()
+    if "## User Story" in antwoord:
+        st.session_state.last_story = antwoord
+
+if st.session_state.last_story:
+    st.divider()
+    st.subheader("Jira export")
+
+    if st.button("Push naar Jira"):
+        with st.spinner("User story wordt naar Jira gestuurd..."):
+            jira_response = push_to_jira(st.session_state.last_story)
+
+        if jira_response.status_code == 201:
+            issue_key = jira_response.json()["key"]
+            jira_link = f"{st.secrets['JIRA_BASE_URL']}/browse/{issue_key}"
+            st.success(f"User story is aangemaakt in Jira: {issue_key}")
+            st.link_button("Open in Jira", jira_link)
+        else:
+            st.error("Aanmaken in Jira is mislukt.")
+            st.code(jira_response.text)
