@@ -67,6 +67,23 @@ Geef een schatting met korte uitleg.
 Geef 3 tot 6 labels.
 """
 
+def login_scherm():
+    st.title("📝 StoryMate")
+    st.subheader("Inloggen")
+
+    gebruikersnaam = st.text_input("Gebruikersnaam")
+    wachtwoord = st.text_input("Wachtwoord", type="password")
+
+    if st.button("Inloggen"):
+        users = st.secrets.get("users", {})
+
+        if gebruikersnaam in users and wachtwoord == users[gebruikersnaam]:
+            st.session_state.ingelogd = True
+            st.session_state.gebruiker = gebruikersnaam
+            st.rerun()
+        else:
+            st.error("Gebruikersnaam of wachtwoord is onjuist.")
+
 def push_to_jira(story_text):
     jira_url = f"{st.secrets['JIRA_BASE_URL']}/rest/api/2/issue"
 
@@ -105,12 +122,24 @@ def push_to_jira(story_text):
 
     return response
 
+if "ingelogd" not in st.session_state:
+    st.session_state.ingelogd = False
+
+if not st.session_state.ingelogd:
+    login_scherm()
+    st.stop()
 
 st.title("📝 StoryMate")
 st.subheader("Jouw AI-assistent voor betere user stories")
 
+st.sidebar.success(f"Ingelogd als: {st.session_state.gebruiker}")
+
 omgeving = st.sidebar.selectbox("Omgeving", ["TEST"])
 st.sidebar.info(f"Actieve omgeving: {omgeving}")
+
+if st.sidebar.button("Uitloggen"):
+    st.session_state.clear()
+    st.rerun()
 
 if st.sidebar.button("Nieuw gesprek"):
     st.session_state.messages = [
