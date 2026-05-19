@@ -11,6 +11,71 @@ st.set_page_config(
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
+st.markdown("""
+<style>
+.stApp {
+    background: linear-gradient(135deg, #f7f9fc 0%, #eaf1ff 100%);
+}
+
+.block-container {
+    max-width: 900px;
+    padding-top: 3rem;
+}
+
+h1 {
+    color: #1f2937;
+    font-weight: 800;
+}
+
+h2, h3 {
+    color: #24324b;
+}
+
+.stButton > button {
+    background-color: #2563eb;
+    color: white;
+    border-radius: 12px;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+}
+
+.stButton > button:hover {
+    background-color: #1d4ed8;
+    color: white;
+}
+
+[data-testid="stTextInput"] input {
+    border-radius: 12px;
+}
+
+[data-testid="stSidebar"] {
+    background-color: #ffffff;
+}
+
+.login-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 22px;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+    margin-top: 2rem;
+}
+
+.hero {
+    background: white;
+    padding: 1.8rem;
+    border-radius: 22px;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+    margin-bottom: 1.5rem;
+}
+
+.small-muted {
+    color: #64748b;
+    font-size: 0.95rem;
+}
+</style>
+""", unsafe_allow_html=True)
+
 SYSTEM_PROMPT = """
 Je bent StoryMate, een vriendelijke AI-assistent voor gewone gebruikers en IT-teams.
 
@@ -68,8 +133,13 @@ Geef 3 tot 6 labels.
 """
 
 def login_scherm():
-    st.title("📝 StoryMate")
-    st.subheader("Inloggen")
+    st.markdown("""
+    <div class="login-card">
+        <h1>📝 StoryMate</h1>
+        <h3>Jouw AI-assistent voor betere user stories</h3>
+        <p class="small-muted">Log in om verder te gaan.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     gebruikersnaam = st.text_input("Gebruikersnaam")
     wachtwoord = st.text_input("Wachtwoord", type="password")
@@ -129,8 +199,13 @@ if not st.session_state.ingelogd:
     login_scherm()
     st.stop()
 
-st.title("📝 StoryMate")
-st.subheader("Jouw AI-assistent voor betere user stories")
+st.markdown("""
+<div class="hero">
+    <h1>📝 StoryMate</h1>
+    <h3>Jouw AI-assistent voor betere user stories</h3>
+    <p class="small-muted">Van een vage wens naar een duidelijke user story die je direct naar Jira kunt sturen.</p>
+</div>
+""", unsafe_allow_html=True)
 
 st.sidebar.success(f"Ingelogd als: {st.session_state.gebruiker}")
 
