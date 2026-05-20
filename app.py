@@ -42,13 +42,6 @@ st.markdown("""
     border-radius: 28px;
     box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25);
     margin-bottom: 1.5rem;
-    border: 1px solid rgba(255,255,255,0.5);
-}
-
-.logo-row {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
 }
 
 .logo-badge {
@@ -60,7 +53,6 @@ st.markdown("""
     align-items: center;
     justify-content: center;
     font-size: 30px;
-    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
 }
 
 .app-title {
@@ -74,7 +66,6 @@ st.markdown("""
     font-size: 1.35rem;
     font-weight: 700;
     color: #1f2937;
-    margin-top: 1.2rem;
 }
 
 .small-muted {
@@ -89,12 +80,10 @@ st.markdown("""
     border: none;
     padding: 0.7rem 1.3rem;
     font-weight: 700;
-    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
 }
 
 .stButton > button:hover {
     color: white;
-    transform: translateY(-1px);
 }
 
 label {
@@ -102,24 +91,10 @@ label {
     font-weight: 600 !important;
 }
 
-[data-testid="stTextInput"] label {
-    color: white !important;
-}
-
 [data-testid="stTextInput"] input {
     border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.25);
     background: rgba(255,255,255,0.95);
     color: #111827 !important;
-}
-
-[data-testid="stTextInputRootElement"] {
-    background: rgba(255,255,255,0.95);
-    border-radius: 14px;
-}
-
-[data-testid="stTextInput"] input::placeholder {
-    color: #64748b;
 }
 
 [data-testid="stChatMessage"] {
@@ -127,56 +102,85 @@ label {
     border-radius: 18px;
     padding: 0.8rem;
     margin-bottom: 0.8rem;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-}
-
-h1, h2, h3 {
-    color: #111827;
 }
 </style>
 """, unsafe_allow_html=True)
 
 SYSTEM_PROMPT = """
-Je bent StoryMate, een vriendelijke AI-assistent voor gewone gebruikers en IT-teams.
+Je bent StoryMate, een vriendelijke AI-assistent voor gewone organisatiegebruikers en IT-teams.
 
-Je doel:
-Help de gebruiker stap voor stap om van een vage wens een duidelijke user story te maken.
+Je helpt de gebruiker om van een vage wens een duidelijke user story te maken.
 
-Belangrijke regels:
+Gedrag:
+- Stel maximaal 5 vragen.
 - Stel altijd maar 1 vraag tegelijk.
-- Stel maximaal 3 vragen in totaal.
-- Wacht na elke vraag op het antwoord van de gebruiker.
+- Vraag alleen wat echt nodig is.
 - Gebruik korte en simpele zinnen.
 - Gebruik natuurlijk Nederlands.
-- Gebruik geen moeilijke technische woorden.
-- Als je genoeg weet, maak je direct de user story.
-"""
+- Geen moeilijke technische woorden.
+- Geen Engelse agile-termen als dat niet nodig is.
+- Als je genoeg informatie hebt, maak je direct de volledige user story.
+- Zeg niet steeds dat iets interessant klinkt.
+- Begin direct met de beste vervolgvraag of met de story.
 
-def render_logo():
-    st.markdown("""
-    <div class="hero-card">
-        <div class="logo-row">
-            <div class="logo-badge">📝</div>
-            <div>
-                <p class="app-title">StoryMate</p>
-            </div>
-        </div>
-        <p class="app-subtitle">Jouw AI-assistent voor betere user stories</p>
-        <p class="small-muted">Van idee naar backlog item in minuten.</p>
-    </div>
-    """, unsafe_allow_html=True)
+Vragen mogen bijvoorbeeld gaan over:
+- Voor wie is dit bedoeld?
+- Wat moet er precies gebeuren?
+- Wat gebeurt er nu handmatig?
+- Wanneer is het resultaat goed?
+- Wat moet er gebeuren als het systeem twijfelt of faalt?
+
+Output als je de story maakt:
+
+## Beoordeling
+Geef aan of dit een user story of epic is.
+
+## User Story
+Als [rol] wil ik [functionaliteit], zodat [waarde].
+
+## Acceptatiecriteria
+Gebruik alleen Nederlands.
+
+1.
+Situatie: ...
+Actie: ...
+Verwachting: ...
+
+2.
+Situatie: ...
+Actie: ...
+Verwachting: ...
+
+3.
+Situatie: ...
+Actie: ...
+Verwachting: ...
+
+## Systeemimpact
+Beschrijf kort welke systemen geraakt kunnen worden.
+
+## Prioriteit
+Laag, middel of hoog met korte uitleg.
+
+## Storypoints
+Geef een schatting met korte uitleg.
+
+## Labels
+Geef 3 tot 6 labels.
+
+Belangrijk:
+- Gebruik nooit Given, When of Then.
+- Gebruik geen Engelse koppen behalve User Story.
+- Maak de tekst kort en bruikbaar voor Jira.
+"""
 
 def login_scherm():
     st.markdown("""
     <div class="login-card">
-        <div class="logo-row">
-            <div class="logo-badge">📝</div>
-            <div>
-                <p class="app-title">StoryMate</p>
-            </div>
-        </div>
+        <div class="logo-badge">📝</div>
+        <p class="app-title">StoryMate</p>
         <p class="app-subtitle">Welkom terug</p>
-        <p class="small-muted">Log in om verder te gaan.</p>
+        <p class="small-muted">Log in om user stories te maken en naar Jira te sturen.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -185,7 +189,6 @@ def login_scherm():
 
     if st.button("Inloggen"):
         users = st.secrets.get("users", {})
-
         if gebruikersnaam in users and wachtwoord == users[gebruikersnaam]:
             st.session_state.ingelogd = True
             st.session_state.gebruiker = gebruikersnaam
@@ -196,10 +199,16 @@ def login_scherm():
 def push_to_jira(story_text):
     jira_url = f"{st.secrets['JIRA_BASE_URL']}/rest/api/2/issue"
 
+    summary = "Nieuwe user story vanuit StoryMate"
+    for line in story_text.splitlines():
+        if line.lower().startswith("als "):
+            summary = line[:250]
+            break
+
     payload = {
         "fields": {
             "project": {"key": st.secrets["JIRA_PROJECT_KEY"]},
-            "summary": "Nieuwe user story vanuit StoryMate",
+            "summary": summary,
             "description": story_text,
             "issuetype": {"name": st.secrets["JIRA_ISSUE_TYPE"]}
         }
@@ -218,6 +227,15 @@ def push_to_jira(story_text):
         }
     )
 
+def is_story_output(text):
+    markers = [
+        "## User Story",
+        "## Acceptatiecriteria",
+        "## Systeemimpact",
+        "## Storypoints"
+    ]
+    return any(marker in text for marker in markers)
+
 if "ingelogd" not in st.session_state:
     st.session_state.ingelogd = False
 
@@ -225,10 +243,18 @@ if not st.session_state.ingelogd:
     login_scherm()
     st.stop()
 
-render_logo()
+st.markdown("""
+<div class="hero-card">
+    <div class="logo-badge">📝</div>
+    <p class="app-title">StoryMate</p>
+    <p class="app-subtitle">Jouw AI-assistent voor betere user stories</p>
+    <p class="small-muted">Van een vage wens naar een Jira-ready story.</p>
+</div>
+""", unsafe_allow_html=True)
 
 st.sidebar.markdown("## StoryMate")
 st.sidebar.success(f"Ingelogd als: {st.session_state.gebruiker}")
+st.sidebar.info("Actieve omgeving: TEST")
 
 if st.sidebar.button("Nieuw gesprek"):
     st.session_state.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -270,22 +296,26 @@ if user_input:
 
     st.session_state.messages.append({"role": "assistant", "content": antwoord})
 
-    if "User Story" in antwoord:
+    if is_story_output(antwoord):
         st.session_state.last_story = antwoord
 
 if st.session_state.last_story:
     st.markdown("""
     <div class="jira-card">
         <h3>Jira export</h3>
-        <p class="small-muted">Stuur deze story direct naar Jira.</p>
+        <p class="small-muted">Stuur deze user story direct naar Jira.</p>
     </div>
     """, unsafe_allow_html=True)
 
     if st.button("Push naar Jira"):
-        jira_response = push_to_jira(st.session_state.last_story)
+        with st.spinner("User story wordt naar Jira gestuurd..."):
+            jira_response = push_to_jira(st.session_state.last_story)
 
         if jira_response.status_code == 201:
-            st.success("User story aangemaakt in Jira")
+            issue_key = jira_response.json()["key"]
+            jira_link = f"{st.secrets['JIRA_BASE_URL']}/browse/{issue_key}"
+            st.success(f"User story is aangemaakt in Jira: {issue_key}")
+            st.link_button("Open in Jira", jira_link)
         else:
-            st.error("Aanmaken mislukt")
+            st.error("Aanmaken in Jira is mislukt.")
             st.code(jira_response.text)
