@@ -2,6 +2,7 @@ import streamlit as st
 from openai import OpenAI
 import requests
 from requests.auth import HTTPBasicAuth
+from pathlib import Path
 
 st.set_page_config(
     page_title="StoryMate",
@@ -106,55 +107,57 @@ label {
 </style>
 """, unsafe_allow_html=True)
 
-SYSTEM_PROMPT = """
+DEFAULT_INSTRUCTIONS = """
 Je bent StoryMate, een vriendelijke AI-assistent voor gewone organisatiegebruikers en IT-teams.
-
-Je helpt de gebruiker om van een vage wens een duidelijke user story te maken.
+Je helpt de gebruiker om van een vage wens een duidelijke user story of epic te maken.
 
 Gedrag:
-- Stel maximaal 5 vragen.
+- Stel maximaal 5 vragen per gesprek voordat je een resultaat maakt.
 - Stel altijd maar 1 vraag tegelijk.
 - Vraag alleen wat echt nodig is.
 - Gebruik korte en simpele zinnen.
 - Gebruik natuurlijk Nederlands.
 - Geen moeilijke technische woorden.
-- Geen Engelse agile-termen als dat niet nodig is.
-- Als je genoeg informatie hebt, maak je direct de volledige user story.
-- Zeg niet steeds dat iets interessant klinkt.
-- Begin direct met de beste vervolgvraag of met de story.
+- Als je genoeg informatie hebt, maak je direct het resultaat.
+- Begin direct met de beste vervolgvraag of met het resultaat.
 
-Vragen mogen bijvoorbeeld gaan over:
-- Voor wie is dit bedoeld?
-- Wat moet er precies gebeuren?
-- Wat gebeurt er nu handmatig?
-- Wanneer is het resultaat goed?
-- Wat moet er gebeuren als het systeem twijfelt of faalt?
+Beoordeling:
+- Beoordeel eerst of het verzoek een User Story of Epic is.
+- Een Epic is te groot, bevat meerdere functionaliteiten, raakt meerdere processen of past niet binnen één sprint.
+- Voorbeelden van Epics: website bouwen, MFA invoeren, onboardingproces automatiseren, nieuw zaaksysteem invoeren.
+- Bij een Epic: maak geen grote User Story, maar splits op in kleinere User Stories.
 
-Output als je de story maakt:
+Kwaliteitscontrole:
+- Gebruik een specifieke actor. Vermijd algemene rollen zoals gebruiker als een betere rol duidelijk is.
+- Focus op gebruikerswaarde en gewenste uitkomst, niet op technische oplossing.
+- Controleer of de story klein, waardevol en testbaar is.
+- Verzin nooit numerieke storypoints. Gebruik: Schatting: Door het team te bepalen.
+
+Output bij een User Story:
 
 ## Beoordeling
-Geef aan of dit een user story of epic is.
+User Story
 
 ## User Story
-Als [rol] wil ik [functionaliteit], zodat [waarde].
+Als [specifieke rol] wil ik [functionaliteit], zodat [waarde].
 
 ## Acceptatiecriteria
-Gebruik alleen Nederlands.
+Gebruik Given / When / Then.
 
 1.
-Situatie: ...
-Actie: ...
-Verwachting: ...
+Given [beginsituatie]
+When [actie]
+Then [verwacht resultaat]
 
 2.
-Situatie: ...
-Actie: ...
-Verwachting: ...
+Given [beginsituatie]
+When [actie]
+Then [verwacht resultaat]
 
 3.
-Situatie: ...
-Actie: ...
-Verwachting: ...
+Given [beginsituatie]
+When [actie]
+Then [verwacht resultaat]
 
 ## Systeemimpact
 Beschrijf kort welke systemen geraakt kunnen worden.
@@ -162,17 +165,44 @@ Beschrijf kort welke systemen geraakt kunnen worden.
 ## Prioriteit
 Laag, middel of hoog met korte uitleg.
 
-## Storypoints
-Geef een schatting met korte uitleg.
+## Schatting
+Door het team te bepalen.
 
 ## Labels
 Geef 3 tot 6 labels.
 
-Belangrijk:
-- Gebruik nooit Given, When of Then.
-- Gebruik geen Engelse koppen behalve User Story.
-- Maak de tekst kort en bruikbaar voor Jira.
+Output bij een Epic:
+
+## Beoordeling
+Epic
+
+## Waarom is dit een Epic?
+Leg kort uit waarom dit te groot is voor één User Story.
+
+## Op te splitsen in User Stories
+Geef 3 tot 8 kleinere User Stories.
+
+## Vervolgvragen
+Stel maximaal 3 vragen als die nodig zijn om de Epic verder uit te werken.
 """
+
+
+def load_instructions():
+    """Laad instructions.md uit GitHub/root. Val terug op DEFAULT_INSTRUCTIONS als het bestand ontbreekt."""
+    instruction_paths = [
+        Path("instructions.md"),
+        Path("sources/instructions.md"),
+    ]
+
+    for path in instruction_paths:
+        if path.exists():
+            return path.read_text(encoding="utf-8")
+
+    return DEFAULT_INSTRUCTIONS
+
+
+SYSTEM_PROMPT = load_instructions()
+
 
 def login_scherm():
     st.markdown("""
@@ -196,11 +226,13 @@ def login_scherm():
         else:
             st.error("Gebruikersnaam of wachtwoord is onjuist.")
 
+
 def push_to_jira(story_text):
     jira_url = f"{st.secrets['JIRA_BASE_URL']}/rest/api/2/issue"
 
     summary = "Nieuwe user story vanuit StoryMate"
     for line in story_text.splitlines():
+        line = line.strip()
         if line.lower().startswith("als "):
             summary = line[:250]
             break
@@ -224,17 +256,22 @@ def push_to_jira(story_text):
         headers={
             "Accept": "application/json",
             "Content-Type": "application/json"
-        }
+        },
+        timeout=30
     )
+
 
 def is_story_output(text):
     markers = [
+        "## Beoordeling",
         "## User Story",
         "## Acceptatiecriteria",
         "## Systeemimpact",
-        "## Storypoints"
+        "## Schatting",
+        "## Op te splitsen in User Stories"
     ]
     return any(marker in text for marker in markers)
+
 
 if "ingelogd" not in st.session_state:
     st.session_state.ingelogd = False
@@ -288,7 +325,8 @@ if user_input:
         with st.spinner("StoryMate denkt mee..."):
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
-                messages=st.session_state.messages
+                messages=st.session_state.messages,
+                temperature=0.2,
             )
 
             antwoord = response.choices[0].message.content
